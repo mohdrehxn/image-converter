@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Free online image converter. Convert JPG, PNG, WebP instantly in your browser. No uploads." />
+<title>Image Converter – Free Online Tool</title>
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🖼️</text></svg>">
+
+<style>
+:root{
+  --primary:#2196f3;
+  --success:#4caf50;
+  --error:#f44336;
+  --bg:#fafafa;
+  --card:#ffffff;
+  --text:#212121;
+  --muted:#757575;
+  --border:#e0e0e0;
+  --radius:12px;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121212;
+    --card:#1e1e1e;
+    --text:#fff;
+    --muted:#b0b0b0;
+    --border:#333;
+  }
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:var(--bg);
+  color:var(--text);
+  padding:16px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+h1{margin:0;font-size:26px}
+h2{font-size:18px;margin-bottom:12px}
+p{color:var(--muted)}
+
+.container{
+  max-width:600px;
+  margin:auto;
+  width:100%;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+}
+
+.dropzone{
+  border:2px dashed var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+  text-align:center;
+  cursor:pointer;
+  transition:.2s;
+  background:var(--bg);
+}
+
+.dropzone.active{
+  border-color:var(--primary);
+  background:rgba(33,150,243,.08);
+}
+
+select,input[type="range"]{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+}
+
+.preview{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:12px;
+}
+
+.preview img{
+  width:100%;
+  height:160px;
+  object-fit:contain;
+  border:1px solid var(--border);
+  border-radius:8px;
+  display:none;
+  background:var(--bg);
+}
+
+.placeholder{
+  height:160px;
+  border:1px dashed var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  font-size:13px;
+  border-radius:8px;
+}
+
+/* Alerts */
+.alert{
+  margin-bottom:12px;
+  padding:10px;
+  border-radius:8px;
+  font-size:14px;
+}
+.alert.success{background:rgba(76,175,80,.15);color:var(--success)}
+.alert.error{background:rgba(244,67,54,.15);color:var(--error)}
+.alert.info{background:rgba(33,150,243,.15);color:var(--primary)}
+
+/* ===== ACTION BAR (Screenshot Style) ===== */
+.action-bar{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  margin-top:24px;
+  border-radius:18px;
+  background:linear-gradient(180deg,#0f0f0f,#141414);
+  border:1px solid #1f1f1f;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.action-bar button{
+  flex:1;
+  padding:12px 18px;
+  font-weight:600;
+  font-size:14px;
+  border-radius:14px;
+  border:none;
+  cursor:pointer;
+  transition:.25s ease;
+}
+
+/* Convert */
+.btn-primary{
+  background:linear-gradient(135deg,#1e88e5,#42a5f5);
+  color:#fff;
+  box-shadow:
+    0 0 0 1px rgba(66,165,245,.4),
+    0 6px 18px rgba(33,150,243,.35);
+}
+
+/* Download disabled */
+.btn-disabled{
+  background:#1a1a1a;
+  color:#777;
+  cursor:not-allowed;
+  box-shadow:inset 0 0 0 1px #262626;
+}
+
+/* Reset */
+.btn-outline{
+  background:transparent;
+  color:#fff;
+  box-shadow:inset 0 0 0 2px #2e6ea6;
+}
+.btn-outline:hover{
+  background:rgba(46,110,166,.15);
+}
+
+.footer{
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+  margin-top:24px;
+}
+
+.ad-placeholder{
+  margin-top:24px;
+  border:2px dashed var(--border);
+  border-radius:12px;
+  height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  font-size:12px;
+}
+
+@media (max-width:480px){
+  .preview{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header style="text-align:center;margin-bottom:24px">
+  <h1>🖼️ Image Converter</h1>
+  <p>Convert images instantly — 100% browser based</p>
+</header>
+
+<main class="container">
+<div class="card">
+
+<div id="alert"></div>
+
+<h2>Step 1: Select Image</h2>
+<div class="dropzone" id="dropzone">
+📁 Drag & drop image here<br><small>or click to select</small>
+</div>
+<input type="file" id="fileInput" accept="image/*" hidden>
+
+<h2 style="margin-top:24px">Step 2: Convert To</h2>
+<select id="format" disabled>
+<option value="">Select format</option>
+<option value="image/png">PNG</option>
+<option value="image/jpeg">JPG</option>
+<option value="image/webp">WebP</option>
+</select>
+
+<div id="qualityWrap" style="display:none;margin-top:12px">
+<label>Quality: <b id="qVal">90</b></label>
+<input type="range" id="quality" min="1" max="100" value="90">
+</div>
+
+<h2 style="margin-top:24px">Preview</h2>
+<div class="preview">
+  <div>
+    <img id="origImg">
+    <div class="placeholder" id="origPH">Original</div>
+  </div>
+  <div>
+    <img id="convImg">
+    <div class="placeholder" id="convPH">Converted</div>
+  </div>
+</div>
+
+<div class="action-bar">
+  <button class="btn-primary" id="convert" disabled>Convert Image</button>
+  <button class="btn-disabled" id="download" disabled>Download</button>
+  <button class="btn-outline" id="reset">Reset</button>
+</div>
+
+</div>
+</main>
+
+<div class="ad-placeholder">🎯 Banner Ad 728×90</div>
+<footer class="footer">Runs locally • No uploads • Offline capable</footer>
+
+<script>
+const fileInput=document.getElementById("fileInput");
+const dropzone=document.getElementById("dropzone");
+const format=document.getElementById("format");
+const quality=document.getElementById("quality");
+const qVal=document.getElementById("qVal");
+const qualityWrap=document.getElementById("qualityWrap");
+const convertBtn=document.getElementById("convert");
+const downloadBtn=document.getElementById("download");
+const resetBtn=document.getElementById("reset");
+const alertBox=document.getElementById("alert");
+const origImg=document.getElementById("origImg");
+const convImg=document.getElementById("convImg");
+const origPH=document.getElementById("origPH");
+const convPH=document.getElementById("convPH");
+
+let originalFile=null;
+let convertedURL=null;
+
+function showAlert(msg,type="info"){
+  alertBox.innerHTML=`<div class="alert ${type}">${msg}</div>`;
+  setTimeout(()=>alertBox.innerHTML="",3000);
+}
+
+dropzone.onclick=()=>fileInput.click();
+dropzone.ondragover=e=>{e.preventDefault();dropzone.classList.add("active");};
+dropzone.ondragleave=()=>dropzone.classList.remove("active");
+dropzone.ondrop=e=>{
+  e.preventDefault();
+  dropzone.classList.remove("active");
+  handleFile(e.dataTransfer.files[0]);
+};
+
+fileInput.onchange=e=>handleFile(e.target.files[0]);
+
+function handleFile(file){
+  if(!file||!file.type.startsWith("image/")){
+    showAlert("Invalid image","error");return;
+  }
+  originalFile=file;
+  format.disabled=false;
+  convertBtn.disabled=false;
+
+  const r=new FileReader();
+  r.onload=()=>{
+    origImg.src=r.result;
+    origImg.style.display="block";
+    origPH.style.display="none";
+  };
+  r.readAsDataURL(file);
+}
+
+format.onchange=()=>{
+  qualityWrap.style.display=
+    format.value==="image/jpeg"||format.value==="image/webp"
+    ?"block":"none";
+};
+
+quality.oninput=()=>qVal.textContent=quality.value;
+
+convertBtn.onclick=async()=>{
+  if(!originalFile||!format.value){
+    showAlert("Select format","error");return;
+  }
+
+  const img=new Image();
+  img.src=origImg.src;
+  await img.decode();
+
+  const canvas=document.createElement("canvas");
+  canvas.width=img.naturalWidth;
+  canvas.height=img.naturalHeight;
+  canvas.getContext("2d").drawImage(img,0,0);
+
+  canvas.toBlob(blob=>{
+    if(convertedURL)URL.revokeObjectURL(convertedURL);
+    convertedURL=URL.createObjectURL(blob);
+    convImg.src=convertedURL;
+    convImg.style.display="block";
+    convPH.style.display="none";
+    downloadBtn.disabled=false;
+    downloadBtn.classList.remove("btn-disabled");
+    showAlert("Conversion successful","success");
+  },format.value,quality.value/100);
+};
+
+downloadBtn.onclick=()=>{
+  const a=document.createElement("a");
+  a.href=convertedURL;
+  a.download=originalFile.name.split(".")[0]+"_converted."+format.value.split("/")[1];
+  a.click();
+};
+
+resetBtn.onclick=()=>{
+  originalFile=null;
+  if(convertedURL)URL.revokeObjectURL(convertedURL);
+  convertedURL=null;
+  origImg.style.display=convImg.style.display="none";
+  origPH.style.display=convPH.style.display="flex";
+  format.value="";
+  format.disabled=true;
+  convertBtn.disabled=true;
+  downloadBtn.disabled=true;
+  downloadBtn.classList.add("btn-disabled");
+  qualityWrap.style.display="none";
+  showAlert("Reset complete","info");
+};
+</script>
+
+</body>
+</html>
